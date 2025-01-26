@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Usuarios</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <h1>Dashboard de Usuarios</h1>
+    <table id="usuariosTable">
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Teléfono</th>
+          <th>Zona</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Los usuarios se cargarán aquí -->
+      </tbody>
+    </table>
+
+    <div class="campaign-form">
+      <h2>Enviar Campaña</h2>
+      <form id="campaignForm">
+        <label for="tipoCampaña">Tipo de Campaña:</label>
+        <select id="tipoCampaña" required>
+          <option value="sms">SMS</option>
+          <option value="email">Email</option>
+          <option value="facebook">Facebook</option>
+        </select>
+
+        <label for="destinatario">Destinatario:</label>
+        <input type="text" id="destinatario" required>
+
+        <label for="mensaje">Mensaje:</label>
+        <textarea id="mensaje" rows="4" required></textarea>
+
+        <button type="submit">Enviar Campaña</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>

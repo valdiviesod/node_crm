@@ -2,42 +2,57 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
     background-color: #f4f4f4;
   }
   
-  .form-container {
-    background-color: #fff;
+  .dashboard-container {
+    max-width: 1200px;
+    margin: 20px auto;
     padding: 20px;
+    background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    width: 300px;
   }
   
-  .form-container h2 {
-    margin-bottom: 20px;
-    font-size: 24px;
+  h1, h2 {
     text-align: center;
   }
   
-  .form-container label {
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  
+  th, td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+  }
+  
+  th {
+    background-color: #f8f9fa;
+  }
+  
+  .campaign-form {
+    margin-top: 20px;
+  }
+  
+  .campaign-form label {
     display: block;
     margin-bottom: 5px;
     font-weight: bold;
   }
   
-  .form-container input, .form-container select {
+  .campaign-form input, .campaign-form select, .campaign-form textarea {
     width: 100%;
     padding: 8px;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
   }
   
-  .form-container button {
+  .campaign-form button {
     width: 100%;
     padding: 10px;
     background-color: #28a745;
@@ -47,6 +62,6 @@ body {
     cursor: pointer;
   }
   
-  .form-container button:hover {
+  .campaign-form button:hover {
     background-color: #218838;
   }
