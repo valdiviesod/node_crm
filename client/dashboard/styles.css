@@ -1,8 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Inter', sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #f4f4f4;
+  background-color: #f8f9fa;
+  color: #333;
 }
 
 .dashboard-container {
@@ -10,13 +13,31 @@ body {
   margin: 20px auto;
   padding: 20px;
   background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 h1,
 h2 {
   text-align: center;
+  color: #2c3e50;
+}
+
+h1 {
+  margin-bottom: 20px;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+.table-container {
+  overflow-x: auto;
+  margin-bottom: 20px;
 }
 
 table {
@@ -27,79 +48,112 @@ table {
 
 th,
 td {
-  padding: 10px;
-  border: 1px solid #ddd;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
   text-align: left;
 }
 
 th {
   background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+tr:hover {
+  background-color: #f1f3f5;
 }
 
 .campaign-form {
   margin-top: 20px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
 }
 
 .campaign-form label {
   display: block;
   margin-bottom: 5px;
-  font-weight: bold;
+  font-weight: 500;
+  color: #2c3e50;
 }
 
 .campaign-form input,
 .campaign-form select,
 .campaign-form textarea {
   width: 100%;
-  padding: 8px;
-  margin-bottom: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.campaign-form textarea {
+  resize: vertical;
 }
 
 .campaign-form button {
   width: 100%;
-  padding: 10px;
-  background-color: #28a745;
+  padding: 12px;
+  background-color: #6658d3;
   color: #fff;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
 }
 
 .campaign-form button:hover {
-  background-color: #218838;
+  background-color: #6658d3;
 }
 
 .filtro-zona {
   margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .filtro-zona label {
-  margin-right: 10px;
+  font-weight: 500;
+  color: #2c3e50;
 }
 
 .filtro-zona select,
 .filtro-zona button {
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
 }
 
 .filtro-zona button {
-  background-color: #28a745;
+  background-color: #6658d3;
   color: #fff;
   border: none;
   cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
 }
 
 .filtro-zona button:hover {
-  background-color: #218838;
+  background-color: #6658d3;
 }
 
-.campaign-form div {
-  margin-bottom: 10px;
+.checkbox-group {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
 }
 
-.campaign-form input[type="checkbox"] {
-  margin-right: 10px;
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 400;
+}
+
+.checkbox-group input[type="checkbox"] {
+  margin: 0;
 }

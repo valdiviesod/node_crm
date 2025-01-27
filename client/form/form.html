@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acceso a Internet</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css">
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="card-image">
+        <h2 class="card-heading">
+          Accede a nuestra red Wi-Fi
+          <small>Déjanos tus datos para conectarte</small>
+        </h2>
+      </div>
+      <form class="card-form" id="contactForm">
+        <div class="input">
+          <input type="text" class="input-field" id="nombreCompleto" required>
+          <label class="input-label">Nombre Completo</label>
+        </div>
+        <div class="input">
+          <input type="email" class="input-field" id="email" required>
+          <label class="input-label">Email</label>
+        </div>
+        <div class="input phone-input">
+          <div class="phone-container">
+            <select id="indicativoPais" class="input-field flag-select" required>
+              <option value="+1" data-flag="us">Estados Unidos (+1)</option>
+              <option value="+52" data-flag="mx">México (+52)</option>
+              <option value="+54" data-flag="ar">Argentina (+54)</option>
+              <option value="+55" data-flag="br">Brasil (+55)</option>
+              <option value="+56" data-flag="cl">Chile (+56)</option>
+              <option value="+57" data-flag="co">Colombia (+57)</option>
+              <option value="+58" data-flag="ve">Venezuela (+58)</option>
+              <option value="+51" data-flag="pe">Perú (+51)</option>
+              <option value="+593" data-flag="ec">Ecuador (+593)</option>
+              <option value="+595" data-flag="py">Paraguay (+595)</option>
+              <option value="+598" data-flag="uy">Uruguay (+598)</option>
+              <option value="+591" data-flag="bo">Bolivia (+591)</option>
+              <option value="+506" data-flag="cr">Costa Rica (+506)</option>
+              <option value="+503" data-flag="sv">El Salvador (+503)</option>
+              <option value="+502" data-flag="gt">Guatemala (+502)</option>
+              <option value="+504" data-flag="hn">Honduras (+504)</option>
+              <option value="+505" data-flag="ni">Nicaragua (+505)</option>
+              <option value="+507" data-flag="pa">Panamá (+507)</option>
+              <option value="+1787" data-flag="pr">Puerto Rico (+1787)</option>
+              <option value="+1809" data-flag="do">República Dominicana (+1809)</option>
+            </select>
+            <label class="input-label">Número Telefónico</label>
+            <input type="tel" id="telefono" class="input-field phone-number" required>
+            
+          </div>
+        </div>
+        <div class="input">
+          <select id="zona" class="input-field" required>
+            <option value="Oficina 1">Oficina 1</option>
+            <option value="Oficina 2">Oficina 2</option>
+            <option value="Oficina 3">Oficina 3</option>
+            <option value="Oficina 4">Oficina 4</option>
+          </select>
+          <label class="input-label">¿Dónde te encuentras?</label>
+        </div>
+        <div class="action">
+          <button type="submit" class="action-button">Enviar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

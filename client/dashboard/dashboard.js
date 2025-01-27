@@ -23,7 +23,6 @@ function cargarUsuarios() {
         const row = document.createElement('tr');
         row.innerHTML = `   
           <td><input type="checkbox" class="usuario-checkbox" data-email="${usuario.email}" data-telefono="${usuario.telefono}" data-facebook-id="${usuario.facebook_id}"></td>
-          <td>${usuario.tipo}</td>
           <td>${usuario.nombre_completo}</td>
           <td>${usuario.email}</td>
           <td>${usuario.telefono || 'N/A'}</td>
