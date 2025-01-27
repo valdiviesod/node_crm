@@ -17,10 +17,10 @@
       <label for="filtroZona">Filtrar por Zona:</label>
       <select id="filtroZona">
         <option value="">Todas las zonas</option>
-        <option value="Norte">Norte</option>
-        <option value="Sur">Sur</option>
-        <option value="Este">Este</option>
-        <option value="Oeste">Oeste</option>
+        <option value="Oficina 1">Oficina 1</option>
+        <option value="Oficina 2">Oficina 2</option>
+        <option value="Oficina 3">Oficina 3</option>
+        <option value="Oficina 4">Oficina 4</option>
       </select>
       <button onclick="cargarUsuarios()">Filtrar</button>
     </div>
@@ -30,7 +30,7 @@
       <thead>
         <tr>
           <th><input type="checkbox" id="seleccionarTodos"></th>
-          <th>Tipo</th>
+          <th>Origen</th>
           <th>Nombre</th>
           <th>Email</th>
           <th>Teléfono</th>
@@ -46,7 +46,8 @@
     <div class="campaign-form">
       <h2>Enviar Campaña</h2>
       <form id="campaignForm">
-        <label for="tipoCampaña">Medios de Envío:</label>
+        <label for="tipoCampaña">Medios de Envío</label>
+        <br>
         <div>
           <input type="checkbox" id="sms" name="tipoCampaña" value="sms">
           <label for="sms">SMS</label>
@@ -59,13 +60,9 @@
           <input type="checkbox" id="email" name="tipoCampaña" value="email">
           <label for="email">Email</label>
         </div>
-        <div>
-          <input type="checkbox" id="facebook" name="tipoCampaña" value="facebook">
-          <label for="facebook">Facebook</label>
-        </div>
         <br>
 
-        <label for="mensaje">Mensaje:</label>
+        <label for="mensaje">Mensaje</label>
         <textarea id="mensaje" rows="4" required></textarea>
 
         <button type="submit">Enviar Campaña</button>

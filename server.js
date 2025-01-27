@@ -26,10 +26,10 @@ connection.connect(err => {
 
 // Ruta para guardar los datos del formulario
 app.post('/guardar-formulario', (req, res) => {
-  const { nombreCompleto, email, telefono, indicativoPais, zona } = req.body;
+  const { nombreCompleto, email, telefono, zona } = req.body;
 
   // Validaciones básicas
-  if (!nombreCompleto || !email || !telefono || !indicativoPais || !zona) {
+  if (!nombreCompleto || !email || !telefono || !zona) {
     return res.status(400).json({ error: 'Todos los campos son obligatorios' });
   }
 
@@ -37,8 +37,8 @@ app.post('/guardar-formulario', (req, res) => {
     return res.status(400).json({ error: 'El email no es válido' });
   }
 
-  const query = 'INSERT INTO formulario (nombre_completo, email, telefono, indicativo_pais, zona) VALUES (?, ?, ?, ?, ?)';
-  connection.query(query, [nombreCompleto, email, telefono, indicativoPais, zona], (err, results) => {
+  const query = 'INSERT INTO formulario (nombre_completo, email, telefono, zona) VALUES (?, ?, ?, ?)';
+  connection.query(query, [nombreCompleto, email, telefono, zona], (err, results) => {
     if (err) {
       console.error('Error al guardar los datos:', err);
       return res.status(500).json({ error: 'Error al guardar los datos en la base de datos' });
@@ -58,7 +58,7 @@ app.get('/usuarios', (req, res) => {
   const { zona } = req.query;
 
   let query = `
-    SELECT 'formulario' AS tipo, nombre_completo, email, telefono, indicativo_pais, zona, NULL AS facebook_id, NULL AS access_token FROM formulario
+    SELECT 'formulario' AS tipo, nombre_completo, email, telefono, zona FROM formulario
   `;
 
   if (zona) {
