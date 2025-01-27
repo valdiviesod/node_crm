@@ -1,81 +1,102 @@
 document.addEventListener('DOMContentLoaded', () => {
-    cargarUsuarios();
-    document.getElementById('campaignForm').addEventListener('submit', enviarCampaña);
-  });
-  
-  function cargarUsuarios() {
-    fetch('http://localhost:5000/usuarios')
-      .then(response => response.json())
-      .then(data => {
-        const tbody = document.querySelector('#usuariosTable tbody');
-        tbody.innerHTML = '';
-  
-        data.forEach(usuario => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${usuario.tipo}</td>
-            <td>${usuario.nombre_completo}</td>
-            <td>${usuario.email}</td>
-            <td>${usuario.telefono || 'N/A'}</td>
-            <td>${usuario.zona || 'N/A'}</td>
-            <td>
-              <button onclick="seleccionarDestinatario('${usuario.email}', '${usuario.telefono}', '${usuario.facebook_id}')">Seleccionar</button>
-            </td>
-          `;
-          tbody.appendChild(row);
-        });
-      })
-      .catch(error => console.error('Error al cargar usuarios:', error));
+  cargarUsuarios();
+  document.getElementById('campaignForm').addEventListener('submit', enviarCampaña);
+  document.getElementById('seleccionarTodos').addEventListener('change', seleccionarTodosUsuarios);
+});
+
+function cargarUsuarios() {
+  const zona = document.getElementById('filtroZona').value;
+  let url = 'http://localhost:5000/usuarios';
+  if (zona) {
+    url += `?zona=${zona}`;
   }
-  
-  function seleccionarDestinatario(email, telefono, facebookId) {
-    const tipoCampaña = document.getElementById('tipoCampaña').value;
-    const destinatario = document.getElementById('destinatario');
-  
-    if (tipoCampaña === 'email') {
-      destinatario.value = email;
-    } else if (tipoCampaña === 'sms') {
-      destinatario.value = telefono;
-    } else if (tipoCampaña === 'facebook') {
-      destinatario.value = facebookId;
-    }
-  }
-  
-  function enviarCampaña(event) {
-    event.preventDefault();
-  
-    const tipoCampaña = document.getElementById('tipoCampaña').value;
-    const destinatario = document.getElementById('destinatario').value;
-    const mensaje = document.getElementById('mensaje').value;
-  
-    let url = '';
-    let body = {};
-  
-    if (tipoCampaña === 'sms') {
-      url = 'http://localhost:5000/enviar-sms';
-      body = { telefono: destinatario, mensaje };
-    } else if (tipoCampaña === 'email') {
-      url = 'http://localhost:5000/enviar-email';
-      body = { email: destinatario, asunto: 'Campaña de Marketing', mensaje };
-    } else if (tipoCampaña === 'facebook') {
-      url = 'http://localhost:5000/enviar-facebook';
-      body = { facebookId: destinatario, mensaje };
-    }
-  
-    fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
-    })
-      .then(response => response.json())
-      .then(data => {
-        alert(data.message);
-        document.getElementById('campaignForm').reset();
-      })
-      .catch(error => {
-        console.error('Error al enviar la campaña:', error);
-        alert('Hubo un error al enviar la campaña');
+
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      const tbody = document.querySelector('#usuariosTable tbody');
+      tbody.innerHTML = '';
+
+      data.forEach(usuario => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><input type="checkbox" class="usuario-checkbox" data-email="${usuario.email}" data-telefono="${usuario.telefono}" data-facebook-id="${usuario.facebook_id}"></td>
+          <td>${usuario.tipo}</td>
+          <td>${usuario.nombre_completo}</td>
+          <td>${usuario.email}</td>
+          <td>${usuario.telefono || 'N/A'}</td>
+          <td>${usuario.zona || 'N/A'}</td>
+        `;
+        tbody.appendChild(row);
       });
+    })
+    .catch(error => console.error('Error al cargar usuarios:', error));
+}
+
+function seleccionarTodosUsuarios() {
+  const checkboxes = document.querySelectorAll('.usuario-checkbox');
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = document.getElementById('seleccionarTodos').checked;
+  });
+}
+
+function enviarCampaña(event) {
+  event.preventDefault();
+
+  const medios = Array.from(document.querySelectorAll('input[name="tipoCampaña"]:checked')).map(input => input.value);
+  const mensaje = document.getElementById('mensaje').value;
+
+  if (medios.length === 0) {
+    alert('Selecciona al menos un medio de envío.');
+    return;
   }
+
+  const usuariosSeleccionados = Array.from(document.querySelectorAll('.usuario-checkbox:checked'));
+
+  if (usuariosSeleccionados.length === 0) {
+    alert('Selecciona al menos un usuario.');
+    return;
+  }
+
+  usuariosSeleccionados.forEach(usuario => {
+    const email = usuario.dataset.email;
+    const telefono = usuario.dataset.telefono;
+    const facebookId = usuario.dataset.facebookId;
+
+    medios.forEach(medio => {
+      let url = '';
+      let body = {};
+
+      if (medio === 'sms' && telefono) {
+        url = 'http://localhost:5000/enviar-sms';
+        body = { telefono, mensaje };
+      } else if (medio === 'email' && email) {
+        url = 'http://localhost:5000/enviar-email';
+        body = { email, asunto: 'Campaña de Marketing', mensaje };
+      } else if (medio === 'facebook' && facebookId) {
+        url = 'http://localhost:5000/enviar-facebook';
+        body = { facebookId, mensaje };
+      }
+
+      if (url && body) {
+        fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body)
+        })
+          .then(response => response.json())
+          .then(data => {
+            console.log(`Mensaje enviado a ${email || telefono || facebookId}:`, data.message);
+          })
+          .catch(error => {
+            console.error('Error al enviar la campaña:', error);
+          });
+      }
+    });
+  });
+
+  alert('Campaña enviada a los usuarios seleccionados.');
+  document.getElementById('campaignForm').reset();
+}

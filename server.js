@@ -53,6 +53,29 @@ function validateEmail(email) {
   return regex.test(email);
 }
 
+// Ruta para obtener usuarios filtrados por zona
+app.get('/usuarios', (req, res) => {
+  const { zona } = req.query;
+
+  let query = `
+    SELECT 'formulario' AS tipo, nombre_completo, email, telefono, indicativo_pais, zona, NULL AS facebook_id, NULL AS access_token FROM formulario
+    UNION ALL
+    SELECT 'facebook' AS tipo, nombre_completo, email, NULL AS telefono, NULL AS indicativo_pais, NULL AS zona, facebook_id, access_token FROM usuarios_facebook
+  `;
+
+  if (zona) {
+    query += ` WHERE zona = '${zona}'`;
+  }
+
+  connection.query(query, (err, results) => {
+    if (err) {
+      console.error('Error al obtener los usuarios:', err);
+      return res.status(500).json({ error: 'Error al obtener los usuarios' });
+    }
+    res.status(200).json(results);
+  });
+});
+
 app.listen(port, () => {
   console.log(`Servidor corriendo en http://localhost:${port}`);
 });

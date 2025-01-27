@@ -1,23 +1,40 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard de Usuarios</title>
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
   <div class="dashboard-container">
     <h1>Dashboard de Usuarios</h1>
+
+    <!-- Filtro por zona -->
+    <div class="filtro-zona">
+      <label for="filtroZona">Filtrar por Zona:</label>
+      <select id="filtroZona">
+        <option value="">Todas las zonas</option>
+        <option value="Norte">Norte</option>
+        <option value="Sur">Sur</option>
+        <option value="Este">Este</option>
+        <option value="Oeste">Oeste</option>
+      </select>
+      <button onclick="cargarUsuarios()">Filtrar</button>
+    </div>
+
+    <!-- Tabla de usuarios -->
     <table id="usuariosTable">
       <thead>
         <tr>
+          <th><input type="checkbox" id="seleccionarTodos"></th>
           <th>Tipo</th>
           <th>Nombre</th>
           <th>Email</th>
           <th>Teléfono</th>
           <th>Zona</th>
-          <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -25,18 +42,28 @@
       </tbody>
     </table>
 
+    <!-- Formulario de campaña -->
     <div class="campaign-form">
       <h2>Enviar Campaña</h2>
       <form id="campaignForm">
-        <label for="tipoCampaña">Tipo de Campaña:</label>
-        <select id="tipoCampaña" required>
-          <option value="sms">SMS</option>
-          <option value="email">Email</option>
-          <option value="facebook">Facebook</option>
-        </select>
-
-        <label for="destinatario">Destinatario:</label>
-        <input type="text" id="destinatario" required>
+        <label for="tipoCampaña">Medios de Envío:</label>
+        <div>
+          <input type="checkbox" id="sms" name="tipoCampaña" value="sms">
+          <label for="sms">SMS</label>
+          <div>
+            <input type="checkbox" id="whatsapp" name="tipoCampaña" value="whatsapp">
+            <label for="whatsapp">Whatsapp</label>
+          </div>
+        </div>
+        <div>
+          <input type="checkbox" id="email" name="tipoCampaña" value="email">
+          <label for="email">Email</label>
+        </div>
+        <div>
+          <input type="checkbox" id="facebook" name="tipoCampaña" value="facebook">
+          <label for="facebook">Facebook</label>
+        </div>
+        <br>
 
         <label for="mensaje">Mensaje:</label>
         <textarea id="mensaje" rows="4" required></textarea>
@@ -48,4 +75,5 @@
 
   <script src="dashboard.js"></script>
 </body>
+
 </html>
