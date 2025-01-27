@@ -1,11 +1,14 @@
 document.getElementById('contactForm').addEventListener('submit', function(event) {
   event.preventDefault();
 
+  const indicativoPais = document.getElementById('indicativoPais').value;
+  const telefono = document.getElementById('telefono').value;
+  const telefonoCompleto = indicativoPais + telefono; // Concatenar indicativo y número
+
   const formData = {
     nombreCompleto: document.getElementById('nombreCompleto').value,
     email: document.getElementById('email').value,
-    telefono: document.getElementById('telefono').value,
-    indicativoPais: document.getElementById('indicativoPais').value,
+    telefono: telefonoCompleto, // Enviar el número completo
     zona: document.getElementById('zona').value
   };
 

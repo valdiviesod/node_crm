@@ -10,10 +10,10 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const connection = mysql.createConnection({
-  host: '93.188.164.3',
+  host: '93.188.164.34',
   user: 'crm_user',
-  password: 'password',
-  database: 'crm_test'
+  password: 'Donecenter1701046_*',
+  database: 'mycrm'
 });
 
 connection.connect(err => {
@@ -59,8 +59,6 @@ app.get('/usuarios', (req, res) => {
 
   let query = `
     SELECT 'formulario' AS tipo, nombre_completo, email, telefono, indicativo_pais, zona, NULL AS facebook_id, NULL AS access_token FROM formulario
-    UNION ALL
-    SELECT 'facebook' AS tipo, nombre_completo, email, NULL AS telefono, NULL AS indicativo_pais, NULL AS zona, facebook_id, access_token FROM usuarios_facebook
   `;
 
   if (zona) {

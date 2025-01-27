@@ -12,14 +12,16 @@ function cargarUsuarios() {
   }
 
   fetch(url)
-    .then(response => response.json())
-    .then(data => {
-      const tbody = document.querySelector('#usuariosTable tbody');
-      tbody.innerHTML = '';
+  .then(response => response.json())
+  .then(data => {
+    const tbody = document.querySelector('#usuariosTable tbody');
+    tbody.innerHTML = '';
 
+    // Asegúrate de que data sea un array
+    if (Array.isArray(data)) {
       data.forEach(usuario => {
         const row = document.createElement('tr');
-        row.innerHTML = `
+        row.innerHTML = `   
           <td><input type="checkbox" class="usuario-checkbox" data-email="${usuario.email}" data-telefono="${usuario.telefono}" data-facebook-id="${usuario.facebook_id}"></td>
           <td>${usuario.tipo}</td>
           <td>${usuario.nombre_completo}</td>
@@ -29,8 +31,11 @@ function cargarUsuarios() {
         `;
         tbody.appendChild(row);
       });
-    })
-    .catch(error => console.error('Error al cargar usuarios:', error));
+    } else {
+      console.error('La respuesta no es un array:', data);
+    }
+  })
+  .catch(error => console.error('Error al cargar usuarios:', error));
 }
 
 function seleccionarTodosUsuarios() {
