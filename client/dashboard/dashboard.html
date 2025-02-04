@@ -44,6 +44,13 @@
       </table>
     </div>
 
+    <!-- Controles de paginación -->
+    <div class="paginacion">
+      <button id="anterior" onclick="cambiarPagina(-1)">← Anterior</button>
+      <span id="paginaActual">Página 1</span>
+      <button id="siguiente" onclick="cambiarPagina(1)">Siguiente →</button>
+    </div>
+
     <!-- Formulario de campaña -->
     <div class="campaign-form">
       <h2>Enviar Campaña</h2>
@@ -57,6 +64,8 @@
           </div>
         </div>
         <div class="form-group">
+          <label for="mensaje">Asunto (Solo para emails)</label>
+          <textarea id="mensaje" rows="4" required></textarea>
           <label for="mensaje">Mensaje</label>
           <textarea id="mensaje" rows="4" required></textarea>
         </div>

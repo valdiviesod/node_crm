@@ -157,3 +157,33 @@ tr:hover {
 .checkbox-group input[type="checkbox"] {
   margin: 0;
 }
+
+.paginacion {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.paginacion button {
+  padding: 8px 16px;
+  background-color: #6658d3;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.paginacion button:hover {
+  background-color: #5548c2;
+}
+
+.paginacion span {
+  font-size: 14px;
+  font-weight: 500;
+  color: #2c3e50;
+}

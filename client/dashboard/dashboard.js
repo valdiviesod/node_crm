@@ -1,10 +1,13 @@
+let paginaActual = 1;
+const registrosPorPagina = 5;
+
 document.addEventListener('DOMContentLoaded', () => {
-  cargarUsuarios();
+  cargarUsuarios(paginaActual);
   document.getElementById('campaignForm').addEventListener('submit', enviarCampaña);
   document.getElementById('seleccionarTodos').addEventListener('change', seleccionarTodosUsuarios);
 });
 
-function cargarUsuarios() {
+function cargarUsuarios(pagina = 1) {
   const zona = document.getElementById('filtroZona').value;
   let url = 'http://localhost:5000/usuarios';
   if (zona) {
@@ -12,29 +15,37 @@ function cargarUsuarios() {
   }
 
   fetch(url)
-  .then(response => response.json())
-  .then(data => {
-    const tbody = document.querySelector('#usuariosTable tbody');
-    tbody.innerHTML = '';
+    .then(response => response.json())
+    .then(data => {
+      const tbody = document.querySelector('#usuariosTable tbody');
+      tbody.innerHTML = '';
 
-    // Asegúrate de que data sea un array
-    if (Array.isArray(data)) {
-      data.forEach(usuario => {
-        const row = document.createElement('tr');
-        row.innerHTML = `   
-          <td><input type="checkbox" class="usuario-checkbox" data-email="${usuario.email}" data-telefono="${usuario.telefono}" data-facebook-id="${usuario.facebook_id}"></td>
-          <td>${usuario.nombre_completo}</td>
-          <td>${usuario.email}</td>
-          <td>${usuario.telefono || 'N/A'}</td>
-          <td>${usuario.zona || 'N/A'}</td>
-        `;
-        tbody.appendChild(row);
-      });
-    } else {
-      console.error('La respuesta no es un array:', data);
-    }
-  })
-  .catch(error => console.error('Error al cargar usuarios:', error));
+      // Calcular el índice inicial y final para la paginación
+      const inicio = (pagina - 1) * registrosPorPagina;
+      const fin = inicio + registrosPorPagina;
+      const usuariosPagina = data.slice(inicio, fin);
+
+      // Asegúrate de que data sea un array
+      if (Array.isArray(usuariosPagina)) {
+        usuariosPagina.forEach(usuario => {
+          const row = document.createElement('tr');
+          row.innerHTML = `   
+            <td><input type="checkbox" class="usuario-checkbox" data-email="${usuario.email}" data-telefono="${usuario.telefono}" data-facebook-id="${usuario.facebook_id}"></td>
+            <td>${usuario.nombre_completo}</td>
+            <td>${usuario.email}</td>
+            <td>${usuario.telefono || 'N/A'}</td>
+            <td>${usuario.zona || 'N/A'}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      } else {
+        console.error('La respuesta no es un array:', data);
+      }
+
+      // Actualizar la paginación
+      actualizarPaginacion(data.length);
+    })
+    .catch(error => console.error('Error al cargar usuarios:', error));
 }
 
 function seleccionarTodosUsuarios() {
@@ -103,4 +114,21 @@ function enviarCampaña(event) {
 
   alert('Campaña enviada a los usuarios seleccionados.');
   document.getElementById('campaignForm').reset();
+}
+
+function actualizarPaginacion(totalUsuarios) {
+  const totalPaginas = Math.ceil(totalUsuarios / registrosPorPagina);
+  const paginaActualElement = document.getElementById('paginaActual');
+  paginaActualElement.textContent = `Página ${paginaActual} de ${totalPaginas}`;
+
+  const botonAnterior = document.getElementById('anterior');
+  const botonSiguiente = document.getElementById('siguiente');
+
+  botonAnterior.disabled = paginaActual === 1;
+  botonSiguiente.disabled = paginaActual === totalPaginas;
+}
+
+function cambiarPagina(direccion) {
+  paginaActual += direccion;
+  cargarUsuarios(paginaActual);
 }
