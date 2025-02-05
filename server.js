@@ -76,21 +76,27 @@ app.get('/usuarios', (req, res) => {
   });
 });
 
-// Ruta para enviar SMS a múltiples usuarios
+// Ruta para enviar SMS/MMS a múltiples usuarios
 app.post('/enviar-sms-multiples', (req, res) => {
-  const { to, body } = req.body;
+  const { to, body, mediaUrl } = req.body;
 
   const promises = to.map(number => {
-    return client.messages.create({
+    const message = {
       body: body,
-      from: process.env.TWILIO_PHONE_NUMBER, // Asegúrate de que el número de Twilio esté correctamente configurado
+      from: process.env.TWILIO_PHONE_NUMBER,
       to: number
-    });
+    };
+
+    if (mediaUrl) {
+      message.mediaUrl = [mediaUrl]; // Twilio acepta un array de URLs para enviar múltiples archivos
+    }
+
+    return client.messages.create(message);
   });
 
   Promise.all(promises)
-    .then(messages => res.status(200).json({ message: 'SMS enviados correctamente', sids: messages.map(m => m.sid) }))
-    .catch(err => res.status(500).json({ error: 'Error al enviar SMS', details: err }));
+    .then(messages => res.status(200).json({ message: 'SMS/MMS enviados correctamente', sids: messages.map(m => m.sid) }))
+    .catch(err => res.status(500).json({ error: 'Error al enviar SMS/MMS', details: err }));
 });
 
 // Ruta para enviar WhatsApp a múltiples usuarios
