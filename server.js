@@ -76,31 +76,49 @@ app.get('/usuarios', (req, res) => {
   });
 });
 
-// Ruta para enviar SMS/MMS a múltiples usuarios
-app.post('/enviar-sms-multiples', (req, res) => {
-  const { to, body, mediaUrl } = req.body;
+// Ruta para enviar SMS
+app.post('/enviar-sms', (req, res) => {
+  const { to, body } = req.body;
 
-  const promises = to.map(number => {
-    const message = {
+  // Convertir el número de teléfono a un array si es necesario
+  const recipients = Array.isArray(to) ? to : [to];
+
+  const promises = recipients.map(number => {
+    return client.messages.create({
       body: body,
       from: process.env.TWILIO_PHONE_NUMBER,
       to: number
-    };
-
-    if (mediaUrl) {
-      message.mediaUrl = [mediaUrl]; // Twilio acepta un array de URLs para enviar múltiples archivos
-    }
-
-    return client.messages.create(message);
+    });
   });
 
   Promise.all(promises)
-    .then(messages => res.status(200).json({ message: 'SMS/MMS enviados correctamente', sids: messages.map(m => m.sid) }))
-    .catch(err => res.status(500).json({ error: 'Error al enviar SMS/MMS', details: err }));
+    .then(messages => res.status(200).json({ message: 'SMS enviados correctamente', sids: messages.map(m => m.sid) }))
+    .catch(err => res.status(500).json({ error: 'Error al enviar SMS', details: err }));
+});
+
+// Ruta para enviar MMS
+app.post('/enviar-mms', (req, res) => {
+  const { to, body, mediaUrl } = req.body;
+
+  // Convertir el número de teléfono a un array si es necesario
+  const recipients = Array.isArray(to) ? to : [to];
+
+  const promises = recipients.map(number => {
+    return client.messages.create({
+      body: body,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: number,
+      mediaUrl: [mediaUrl] // Asegúrate de que mediaUrl sea un array
+    });
+  });
+
+  Promise.all(promises)
+    .then(messages => res.status(200).json({ message: 'MMS enviados correctamente', sids: messages.map(m => m.sid) }))
+    .catch(err => res.status(500).json({ error: 'Error al enviar MMS', details: err }));
 });
 
 // Ruta para enviar WhatsApp a múltiples usuarios
-app.post('/enviar-whatsapp-multiples', (req, res) => {
+app.post('/enviar-whatsapp', (req, res) => {
   const { to, body } = req.body;
 
   const promises = to.map(number => {
@@ -117,7 +135,7 @@ app.post('/enviar-whatsapp-multiples', (req, res) => {
 });
 
 // Ruta para enviar correo electrónico a múltiples usuarios usando Twilio SendGrid
-app.post('/enviar-email-multiples', (req, res) => {
+app.post('/enviar-email', (req, res) => {
   const { to, subject, text } = req.body;
 
   const promises = to.map(email => {

@@ -187,3 +187,38 @@ tr:hover {
   font-weight: 500;
   color: #2c3e50;
 }
+
+/* Estilos para los checkboxes */
+.usuario-checkbox {
+  margin: 0;
+  cursor: pointer;
+}
+
+/* Estilos para el botón "Seleccionar todos los usuarios" */
+.filtro-zona button {
+  margin-left: 10px;
+  padding: 10px 20px;
+  background-color: #6658d3;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.filtro-zona button:hover {
+  background-color: #5548c2;
+}
+
+/* Estilos para los checkboxes */
+.usuario-checkbox {
+  margin: 0;
+  cursor: pointer;
+}
+
+/* Estilos para el checkbox "Seleccionar todos" */
+#seleccionarTodos {
+  margin: 0;
+  cursor: pointer;
+}
