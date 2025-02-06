@@ -140,20 +140,29 @@ function enviarCampaña(event) {
       let url = '';
       let body = {};
 
-      if ((medio === 'sms' || medio === 'mms') && usuario.telefono) {
-        url = 'http://localhost:5000/enviar-sms';
+      if ((medio === 'sms' || medio === 'mms' || medio === 'whatsapp') && usuario.telefono) {
+        // Enviar SMS, MMS o WhatsApp
+        url = medio === 'whatsapp' ? 'http://localhost:5000/enviar-whatsapp' : 
+              medio === 'mms' ? 'http://localhost:5000/enviar-mms' : 
+              'http://localhost:5000/enviar-sms';
+        
         body = {
-          to: usuario.telefono, // Cambiado de [usuario.telefono] a usuario.telefono
-          message: mensaje, // Cambiado de body a message
-          mediaUrl: medio === 'mms' ? mediaUrl : undefined
+          to: usuario.telefono,
+          body: mensaje,
+          ...(medio === 'mms' && { mediaUrl: mediaUrl }) // Solo para MMS
         };
-      } else if (medio === 'email') {
+      } else if (medio === 'email' && usuario.email) {
+        // Enviar Email
         url = 'http://localhost:5000/enviar-email';
         body = {
           to: [usuario.email],
           subject: document.getElementById('asunto').value || 'Campaña de Marketing',
           text: mensaje
         };
+      } else {
+        // Si no tiene el campo requerido, agregar un error
+        errores.push(`El usuario ${usuario.nombre_completo} no tiene ${medio === 'email' ? 'correo electrónico' : 'número de teléfono'}.`);
+        return;
       }
 
       if (url && body) {

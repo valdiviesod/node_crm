@@ -11,12 +11,11 @@ const port = 5000;
 app.use(cors());
 app.use(bodyParser.json());
 
-// Configuración de la conexión a la base de datos MariaDB
 const connection = mysql.createConnection({
-  host: '93.188.164.34',
-  user: 'crm_user',
-  password: 'Donecenter1701046_*',
-  database: 'mycrm'
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE
 });
 
 connection.connect(err => {
@@ -27,16 +26,13 @@ connection.connect(err => {
   console.log('Conectado a la base de datos MariaDB');
 });
 
-// Configuración de Twilio para SMS, WhatsApp y correos electrónicos
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = twilio(accountSid, authToken);
 
-// Ruta para guardar los datos del formulario
 app.post('/guardar-formulario', (req, res) => {
   const { nombreCompleto, email, telefono, zona } = req.body;
 
-  // Validaciones básicas
   if (!nombreCompleto || !email || !telefono || !zona) {
     return res.status(400).json({ error: 'Todos los campos son obligatorios' });
   }
@@ -55,7 +51,6 @@ app.post('/guardar-formulario', (req, res) => {
   });
 });
 
-// Ruta para obtener usuarios filtrados por zona
 app.get('/usuarios', (req, res) => {
   const { zona } = req.query;
 
@@ -76,11 +71,9 @@ app.get('/usuarios', (req, res) => {
   });
 });
 
-// Ruta para enviar SMS
 app.post('/enviar-sms', (req, res) => {
   const { to, body } = req.body;
 
-  // Convertir el número de teléfono a un array si es necesario
   const recipients = Array.isArray(to) ? to : [to];
 
   const promises = recipients.map(number => {
@@ -96,11 +89,9 @@ app.post('/enviar-sms', (req, res) => {
     .catch(err => res.status(500).json({ error: 'Error al enviar SMS', details: err }));
 });
 
-// Ruta para enviar MMS
 app.post('/enviar-mms', (req, res) => {
   const { to, body, mediaUrl } = req.body;
 
-  // Convertir el número de teléfono a un array si es necesario
   const recipients = Array.isArray(to) ? to : [to];
 
   const promises = recipients.map(number => {
@@ -108,7 +99,7 @@ app.post('/enviar-mms', (req, res) => {
       body: body,
       from: process.env.TWILIO_PHONE_NUMBER,
       to: number,
-      mediaUrl: [mediaUrl] // Asegúrate de que mediaUrl sea un array
+      mediaUrl: [mediaUrl] 
     });
   });
 
@@ -117,7 +108,6 @@ app.post('/enviar-mms', (req, res) => {
     .catch(err => res.status(500).json({ error: 'Error al enviar MMS', details: err }));
 });
 
-// Ruta para enviar WhatsApp a múltiples usuarios
 app.post('/enviar-whatsapp', (req, res) => {
   const { to, body } = req.body;
 
@@ -134,13 +124,12 @@ app.post('/enviar-whatsapp', (req, res) => {
     .catch(err => res.status(500).json({ error: 'Error al enviar WhatsApp', details: err }));
 });
 
-// Ruta para enviar correo electrónico a múltiples usuarios usando Twilio SendGrid
 app.post('/enviar-email', (req, res) => {
   const { to, subject, text } = req.body;
 
   const promises = to.map(email => {
     return client.messages.create({
-      from: process.env.TWILIO_EMAIL_FROM, // Asegúrate de que este correo esté verificado en Twilio SendGrid
+      from: process.env.TWILIO_EMAIL_FROM, 
       to: email,
       subject: subject,
       text: text
@@ -152,13 +141,11 @@ app.post('/enviar-email', (req, res) => {
     .catch(err => res.status(500).json({ error: 'Error al enviar correos', details: err }));
 });
 
-// Función para validar email
 function validateEmail(email) {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);
 }
 
-// Iniciar el servidor
 app.listen(port, () => {
   console.log(`Servidor corriendo en http://localhost:${port}`);
 });
