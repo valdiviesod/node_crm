@@ -1,7 +1,7 @@
 let paginaActual = 1;
 const registrosPorPagina = 5;
 let usuariosSeleccionadosGlobal = new Set();
-let datosUsuariosGlobal = []; // Para mantener los datos entre páginas
+let datosUsuariosGlobal = [];
 
 document.addEventListener('DOMContentLoaded', () => {
   cargarUsuarios(paginaActual);
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     campaignForm.addEventListener('submit', enviarCampaña);
   }
 
-  // Agregar evento para checkboxes individuales
+  // Evento para checkboxes individuales
   document.querySelector('#usuariosTable tbody').addEventListener('change', (e) => {
     if (e.target.classList.contains('usuario-checkbox')) {
       const email = e.target.dataset.email;
@@ -35,10 +35,13 @@ function cargarUsuarios(pagina = 1) {
   fetch(url)
     .then(response => response.json())
     .then(data => {
-      datosUsuariosGlobal = data; // Guardar los datos completos
+      datosUsuariosGlobal = data;
       mostrarPagina(pagina);
     })
-    .catch(error => console.error('Error al cargar usuarios:', error));
+    .catch(error => {
+      console.error('Error al cargar usuarios:', error);
+      alert('No se pudieron cargar los usuarios. Intente de nuevo.');
+    });
 }
 
 function mostrarPagina(pagina) {
@@ -103,6 +106,7 @@ function actualizarSeleccionarTodos() {
   }
 }
 
+
 function enviarCampaña(event) {
   event.preventDefault();
 
@@ -126,10 +130,12 @@ function enviarCampaña(event) {
 
   const mediaUrl = document.getElementById('mediaUrl').value;
   
-  // Obtener los datos de los usuarios seleccionados
-  const usuariosSeleccionados = datosUsuariosGlobal.filter(usuario => 
-    usuariosSeleccionadosGlobal.has(usuario.email)
-  );
+  // Deduplicate users by email
+  const usuariosSeleccionados = Array.from(usuariosSeleccionadosGlobal)
+    .map(email => datosUsuariosGlobal.find(usuario => usuario.email === email))
+    .filter((usuario, index, self) => 
+      index === self.findIndex((u) => u.email === usuario.email)
+    );
 
   let errores = [];
   let exitosos = 0;
@@ -141,7 +147,6 @@ function enviarCampaña(event) {
       let body = {};
 
       if ((medio === 'sms' || medio === 'mms' || medio === 'whatsapp') && usuario.telefono) {
-        // Enviar SMS, MMS o WhatsApp
         url = medio === 'whatsapp' ? 'http://localhost:5000/enviar-whatsapp' : 
               medio === 'mms' ? 'http://localhost:5000/enviar-mms' : 
               'http://localhost:5000/enviar-sms';
@@ -149,10 +154,9 @@ function enviarCampaña(event) {
         body = {
           to: usuario.telefono,
           body: mensaje,
-          ...(medio === 'mms' && { mediaUrl: mediaUrl }) // Solo para MMS
+          ...(medio === 'mms' && { mediaUrl: mediaUrl })
         };
       } else if (medio === 'email' && usuario.email) {
-        // Enviar Email
         url = 'http://localhost:5000/enviar-email';
         body = {
           to: [usuario.email],
@@ -160,7 +164,6 @@ function enviarCampaña(event) {
           text: mensaje
         };
       } else {
-        // Si no tiene el campo requerido, agregar un error
         errores.push(`El usuario ${usuario.nombre_completo} no tiene ${medio === 'email' ? 'correo electrónico' : 'número de teléfono'}.`);
         return;
       }
@@ -191,7 +194,6 @@ function enviarCampaña(event) {
     });
   });
 
-  // Esperar a que todos los envíos terminen
   Promise.all(promesasEnvio).finally(() => {
     let mensaje = '';
     if (exitosos > 0) {
@@ -220,5 +222,16 @@ function seleccionarTodosUsuarios() {
     } else {
       usuariosSeleccionadosGlobal.delete(email);
     }
+  });
+}
+
+function seleccionarTodosUsuariosVisibles() {
+  const checkboxes = document.querySelectorAll('.usuario-checkbox');
+  const seleccionarTodos = true;
+  
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = seleccionarTodos;
+    const email = checkbox.dataset.email;
+    usuariosSeleccionadosGlobal.add(email);
   });
 }

@@ -32,7 +32,7 @@
       <table id="usuariosTable">
         <thead>
           <tr>
-            <th></th>
+            <th><input type="checkbox" id="seleccionarTodos" onchange="seleccionarTodosUsuarios()"></th>
             <th>Nombre</th>
             <th>Email</th>
             <th>Teléfono</th>
@@ -56,21 +56,21 @@
     <div class="campaign-form">
       <form id="campaignForm">
         <div class="form-group">
-          <label for="tipoCampaña">Medios de Envío de campaña</label>
+          <label>Medios de Envío de campaña</label>
           <div class="checkbox-group">
-            <label><input type="checkbox" id="sms" name="tipoCampaña" value="sms"> SMS</label>
-            <label><input type="checkbox" id="mms" name="tipoCampaña" value="mms"> MMS</label>
-            <label><input type="checkbox" id="whatsapp" name="tipoCampaña" value="whatsapp"> Whatsapp</label>
-            <label><input type="checkbox" id="email" name="tipoCampaña" value="email"> Email</label>
+            <label><input type="checkbox" name="tipoCampaña" value="sms"> SMS</label>
+            <label><input type="checkbox" name="tipoCampaña" value="mms"> MMS</label>
+            <label><input type="checkbox" name="tipoCampaña" value="whatsapp"> Whatsapp</label>
+            <label><input type="checkbox" name="tipoCampaña" value="email"> Email</label>
           </div>
         </div>
         <div class="form-group">
           <label for="asunto">Asunto (Solo para emails)</label>
-          <input id="asunto" rows="4"></input>
+          <input id="asunto" type="text">
           <label for="mensaje">Mensaje</label>
           <textarea id="mensaje" rows="4" required></textarea>
           <label for="mediaUrl">URL de archivo multimedia (Solo para MMS)</label>
-          <input id="mediaUrl" rows="4"></input>
+          <input id="mediaUrl" type="text">
         </div>
         <button type="submit">Enviar Campaña</button>
       </form>
