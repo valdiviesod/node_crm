@@ -163,21 +163,38 @@ app.post('/webhook/whatsapp', (req, res) => {
   res.end(twiml.toString());
 });
 
-app.post('/enviar-email', (req, res) => {
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+app.post('/enviar-email', async (req, res) => {
   const { to, subject, text } = req.body;
 
-  const promises = to.map(email => {
-    return client.messages.create({
-      from: process.env.TWILIO_EMAIL_FROM, 
-      to: email,
-      subject: subject,
-      text: text
-    });
-  });
+  if (!to || !Array.isArray(to) || to.length === 0) {
+    return res.status(400).json({ error: 'Destinatarios inválidos' });
+  }
 
-  Promise.all(promises)
-    .then(messages => res.status(200).json({ message: 'Correos enviados correctamente', sids: messages.map(m => m.sid) }))
-    .catch(err => res.status(500).json({ error: 'Error al enviar correos', details: err }));
+  const fromEmail = 'e.marketing@techcis.com.co';
+
+  const messages = to.map(email => ({
+    to: email,
+    from: fromEmail,
+    subject: subject,
+    text: text
+  }));
+
+  try {
+    const results = await sgMail.sendMultiple(messages);
+    res.status(200).json({ 
+      message: 'Correos enviados correctamente', 
+      results: results 
+    });
+  } catch (error) {
+    console.error('Error al enviar correos:', error);
+    res.status(500).json({ 
+      error: 'Error al enviar correos', 
+      details: error.message 
+    });
+  }
 });
 
 function validateEmail(email) {
