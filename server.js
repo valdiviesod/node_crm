@@ -23,7 +23,7 @@ connection.connect(err => {
     console.error('Error conectando a la base de datos:', err);
     return;
   }
-  console.log('Conectado a la base de datos MariaDB');
+  console.log('Conectado a la base de datos');
 });
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -108,20 +108,59 @@ app.post('/enviar-mms', (req, res) => {
     .catch(err => res.status(500).json({ error: 'Error al enviar MMS', details: err }));
 });
 
-app.post('/enviar-whatsapp', (req, res) => {
-  const { to, body } = req.body;
+app.post('/enviar-whatsapp', async (req, res) => { // Solo sandbox a 3156130003
+  try {
+    const { to, body } = req.body;
+    
+    if (!Array.isArray(to) || to.length === 0 || !body) {
+      return res.status(400).json({ 
+        error: 'Se requieren destinatarios (array de números) y un mensaje' 
+      });
+    }
 
-  const promises = to.map(number => {
-    return client.messages.create({
-      body: body,
-      from: `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`,
-      to: `whatsapp:${number}`
+    const promises = to.map(async (number) => {
+      // Asegurarse de que el número tenga el formato correcto
+      const whatsappNumber = number.startsWith('whatsapp:') ? number : `whatsapp:${number.startsWith('+') ? number : `+${number}`}`;
+      
+      console.log('Enviando mensaje desde:', `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`);
+      console.log('Enviando mensaje a:', whatsappNumber);
+
+      return client.messages.create({
+        body: body,
+        from: `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
+        to: whatsappNumber
+      });
     });
-  });
 
-  Promise.all(promises)
-    .then(messages => res.status(200).json({ message: 'WhatsApps enviados correctamente', sids: messages.map(m => m.sid) }))
-    .catch(err => res.status(500).json({ error: 'Error al enviar WhatsApp', details: err }));
+    const messages = await Promise.all(promises);
+    
+    res.status(200).json({ 
+      message: 'Mensajes de WhatsApp enviados correctamente', 
+      sids: messages.map(m => m.sid)
+    });
+  } catch (err) {
+    console.error('Error detallado:', {
+      message: err.message,
+      code: err.code,
+      status: err.status,
+      moreInfo: err.moreInfo
+    });
+    res.status(500).json({ 
+      error: 'Error al enviar mensajes de WhatsApp', 
+      details: err.message 
+    });
+  }
+});
+
+// Endpoint para recibir webhooks de WhatsApp
+app.post('/webhook/whatsapp', (req, res) => {
+  const twiml = new twilio.twiml.MessagingResponse();
+
+  // Puedes personalizar la respuesta automática aquí
+  twiml.message('Gracias por tu mensaje. Te responderemos pronto.');
+
+  res.writeHead(200, {'Content-Type': 'text/xml'});
+  res.end(twiml.toString());
 });
 
 app.post('/enviar-email', (req, res) => {
