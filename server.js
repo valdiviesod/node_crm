@@ -3,6 +3,8 @@ const bodyParser = require('body-parser');
 const mysql = require('mysql2');
 const cors = require('cors');
 const twilio = require('twilio');
+const { default: makeWASocket, useMultiFileAuthState } = require('@whiskeysockets/baileys');
+const qrcode = require('qrcode-terminal');
 require('dotenv').config();
 
 const app = express();
@@ -11,6 +13,7 @@ const port = 5000;
 app.use(cors());
 app.use(bodyParser.json());
 
+// Configuración de la base de datos
 const connection = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -24,6 +27,79 @@ connection.connect(err => {
     return;
   }
   console.log('Conectado a la base de datos');
+});
+
+let sock;
+let qrCode = null;
+
+const initializeWhatsApp = async () => {
+  const { state, saveCreds } = await useMultiFileAuthState('auth');
+  sock = makeWASocket({
+    auth: state,
+    printQRInTerminal: true,
+  });
+
+  sock.ev.on('creds.update', saveCreds);
+
+  sock.ev.on('connection.update', (update) => {
+    const { connection, lastDisconnect, qr } = update;
+
+    if (qr) {
+      qrCode = qr;
+      qrcode.generate(qr, { small: true });
+    }
+
+    if (connection === 'close') {
+      const shouldReconnect = lastDisconnect.error?.output?.statusCode !== 401; // No reconectar si el error es de autenticación
+      console.log('Conexión cerrada, reconectando...', lastDisconnect.error);
+
+      if (shouldReconnect) {
+        setTimeout(() => {
+          console.log('Reconectando...');
+          initializeWhatsApp(); // Llama a la función de inicialización nuevamente
+        }, 5000); // Espera 5 segundos antes de reconectar
+      }
+    } else if (connection === 'open') {
+      console.log('Conexión exitosa con WhatsApp');
+    }
+  });
+
+  sock.ev.on('messages.upsert', ({ messages }) => {
+    const msg = messages[0];
+    if (!msg.message) return;
+    console.log(`New message from ${msg.key.remoteJid}:`, msg.message);
+  });
+};
+
+initializeWhatsApp(); // Inicializa la conexión por primera vez
+
+// Ruta para obtener el QR
+app.get('/qr', (req, res) => {
+  if (qrCode) {
+    qrcode.generate(qrCode, { small: true }, (qrcode) => {
+      res.send(`<pre>${qrcode}</pre>`);
+    });
+  } else {
+    res.send('No QR code available');
+  }
+});
+
+
+// Ruta para enviar mensajes de WhatsApp
+app.post('/enviar-whatsapp', async (req, res) => {
+  const { to, message } = req.body;
+
+  if (!to || !message) {
+    return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+  }
+
+  try {
+    await sock.sendMessage(to, { text: message });
+    res.status(200).json({ message: 'Mensaje enviado correctamente' });
+  } catch (err) {
+    console.error('Error al enviar mensaje:', err);
+    res.status(500).json({ error: 'Error al enviar mensaje', details: err });
+  }
 });
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -106,61 +182,6 @@ app.post('/enviar-mms', (req, res) => {
   Promise.all(promises)
     .then(messages => res.status(200).json({ message: 'MMS enviados correctamente', sids: messages.map(m => m.sid) }))
     .catch(err => res.status(500).json({ error: 'Error al enviar MMS', details: err }));
-});
-
-app.post('/enviar-whatsapp', async (req, res) => { // Solo sandbox a 3156130003
-  try {
-    const { to, body } = req.body;
-    
-    if (!Array.isArray(to) || to.length === 0 || !body) {
-      return res.status(400).json({ 
-        error: 'Se requieren destinatarios (array de números) y un mensaje' 
-      });
-    }
-
-    const promises = to.map(async (number) => {
-      // Asegurarse de que el número tenga el formato correcto
-      const whatsappNumber = number.startsWith('whatsapp:') ? number : `whatsapp:${number.startsWith('+') ? number : `+${number}`}`;
-      
-      console.log('Enviando mensaje desde:', `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`);
-      console.log('Enviando mensaje a:', whatsappNumber);
-
-      return client.messages.create({
-        body: body,
-        from: `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
-        to: whatsappNumber
-      });
-    });
-
-    const messages = await Promise.all(promises);
-    
-    res.status(200).json({ 
-      message: 'Mensajes de WhatsApp enviados correctamente', 
-      sids: messages.map(m => m.sid)
-    });
-  } catch (err) {
-    console.error('Error detallado:', {
-      message: err.message,
-      code: err.code,
-      status: err.status,
-      moreInfo: err.moreInfo
-    });
-    res.status(500).json({ 
-      error: 'Error al enviar mensajes de WhatsApp', 
-      details: err.message 
-    });
-  }
-});
-
-// Endpoint para recibir webhooks de WhatsApp
-app.post('/webhook/whatsapp', (req, res) => {
-  const twiml = new twilio.twiml.MessagingResponse();
-
-  // Puedes personalizar la respuesta automática aquí
-  twiml.message('Gracias por tu mensaje. Te responderemos pronto.');
-
-  res.writeHead(200, {'Content-Type': 'text/xml'});
-  res.end(twiml.toString());
 });
 
 const sgMail = require('@sendgrid/mail');
