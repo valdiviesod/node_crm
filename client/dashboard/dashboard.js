@@ -106,7 +106,6 @@ function actualizarSeleccionarTodos() {
   }
 }
 
-
 function enviarCampaña(event) {
   event.preventDefault();
 
@@ -147,15 +146,20 @@ function enviarCampaña(event) {
       let body = {};
 
       if ((medio === 'sms' || medio === 'mms' || medio === 'whatsapp') && usuario.telefono) {
+        // Formatear el número de teléfono para WhatsApp
+        const numeroFormateado = usuario.telefono.replace('+', ''); // Elimina el símbolo '+'
+        const numeroWhatsApp = medio === 'whatsapp' ? `${numeroFormateado}@s.whatsapp.net` : numeroFormateado;
+      
         url = medio === 'whatsapp' ? 'http://localhost:5000/enviar-whatsapp' : 
               medio === 'mms' ? 'http://localhost:5000/enviar-mms' : 
               'http://localhost:5000/enviar-sms';
         
         body = {
-          to: usuario.telefono,
-          body: mensaje,
+          to: numeroWhatsApp, // Usar el número formateado para WhatsApp
+          message: mensaje,   // Asegúrate de que el campo se llame "message" y no "body"
           ...(medio === 'mms' && { mediaUrl: mediaUrl })
         };
+      
       } else if (medio === 'email' && usuario.email) {
         url = 'http://localhost:5000/enviar-email';
         body = {
