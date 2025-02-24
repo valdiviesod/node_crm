@@ -34,3 +34,24 @@ document.getElementById('contactForm').addEventListener('submit', function(event
   });
 });
 
+const validarCodigo = async (email, codigoIngresado) => {
+  try {
+    const response = await fetch('http://localhost:5000/validar-codigo', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, codigoIngresado }),
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      alert(data.message); // "Código validado correctamente"
+    } else {
+      alert(data.error); // "Código de validación incorrecto"
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Hubo un error al validar el código');
+  }
+};

@@ -106,6 +106,23 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = twilio(accountSid, authToken);
 
+const codigosTemporales = new Map(); // Almacena los códigos temporales
+
+// Función para generar un código de validación
+const generarCodigoTemporal = () => {
+  return Math.floor(100000 + Math.random() * 900000); // Código de 6 dígitos
+};
+
+// Función para eliminar códigos expirados
+const limpiarCodigosExpirados = () => {
+  const ahora = Date.now();
+  for (const [email, { expiracion }] of codigosTemporales.entries()) {
+    if (ahora > expiracion) {
+      codigosTemporales.delete(email); // Eliminar el código expirado
+    }
+  }
+};
+
 app.post('/guardar-formulario', (req, res) => {
   const { nombreCompleto, email, telefono, zona } = req.body;
 
@@ -127,7 +144,11 @@ app.post('/guardar-formulario', (req, res) => {
 
     if (results.length > 0) {
       // El correo ya está registrado, generar un código de validación
-      const codigoValidacion = Math.floor(100000 + Math.random() * 900000); // Código de 6 dígitos
+      const codigoValidacion = generarCodigoTemporal();
+      const expiracion = Date.now() + 5 * 60 * 1000; // 5 minutos de expiración
+
+      // Almacenar el código en memoria
+      codigosTemporales.set(email, { codigoValidacion, expiracion });
 
       // Enviar el código de validación por SMS
       client.messages.create({
@@ -156,6 +177,7 @@ app.post('/guardar-formulario', (req, res) => {
   });
 });
 
+
 app.post('/validar-codigo', (req, res) => {
   const { email, codigoIngresado } = req.body;
 
@@ -163,34 +185,25 @@ app.post('/validar-codigo', (req, res) => {
     return res.status(400).json({ error: 'Todos los campos son obligatorios' });
   }
 
-  // Verificar si el correo existe en la base de datos
-  const checkEmailQuery = 'SELECT * FROM formulario WHERE email = ?';
-  connection.query(checkEmailQuery, [email], (err, results) => {
-    if (err) {
-      console.error('Error al verificar el correo:', err);
-      return res.status(500).json({ error: 'Error al verificar el correo' });
-    }
+  // Limpiar códigos expirados antes de validar
+  limpiarCodigosExpirados();
 
-    if (results.length === 0) {
-      return res.status(404).json({ error: 'El correo no está registrado' });
-    }
+  // Obtener el código almacenado en memoria
+  const codigoGuardado = codigosTemporales.get(email);
 
-    // Obtener el código de validación almacenado (puedes guardarlo en la base de datos o en memoria)
-    const codigoValidacionGuardado = results[0].codigo_validacion; // Asume que agregaste una columna `codigo_validacion` en la tabla
+  if (!codigoGuardado) {
+    return res.status(400).json({ error: 'Código no encontrado o expirado' });
+  }
 
-    if (!codigoValidacionGuardado) {
-      return res.status(400).json({ error: 'No se encontró un código de validación para este correo' });
-    }
-
-    // Comparar el código ingresado con el código guardado
-    if (codigoIngresado === codigoValidacionGuardado) {
-      // Código válido
-      res.status(200).json({ message: 'Código validado correctamente' });
-    } else {
-      // Código inválido
-      res.status(400).json({ error: 'Código de validación incorrecto' });
-    }
-  });
+  // Comparar el código ingresado con el código guardado
+  if (codigoIngresado == codigoGuardado.codigoValidacion) {
+    // Código válido, eliminar el código de memoria
+    codigosTemporales.delete(email);
+    res.status(200).json({ message: 'Código validado correctamente' });
+  } else {
+    // Código inválido
+    res.status(400).json({ error: 'Código de validación incorrecto' });
+  }
 });
 
 app.get('/usuarios', (req, res) => {
