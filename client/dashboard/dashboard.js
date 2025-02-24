@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const campaignForm = document.getElementById('campaignForm');
   if (campaignForm) {
-    campaignForm.addEventListener('submit', enviarCampaña);
+    campaignForm.addEventListener('submit', sendCampaign);
   }
 
   // Evento para checkboxes individuales
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function cargarUsuarios(pagina = 1) {
   const zona = document.getElementById('filtroZona').value;
-  let url = 'http://localhost:5000/usuarios';
+  let url = 'http://127.0.0.1:5000/usuarios';
   if (zona) {
     url += `?zona=${zona}`;
   }
@@ -60,6 +60,7 @@ function mostrarPagina(pagina) {
         <td>${usuario.nombre_completo}</td>
         <td>${usuario.email}</td>
         <td>${usuario.telefono || 'N/A'}</td>
+        
         <td>${usuario.zona || 'N/A'}</td>
       `;
       tbody.appendChild(row);
@@ -89,7 +90,7 @@ function actualizarPaginacion(totalUsuarios) {
 function cambiarPagina(direccion) {
   const totalPaginas = Math.ceil(datosUsuariosGlobal.length / registrosPorPagina);
   const nuevaPagina = paginaActual + direccion;
-  
+
   if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas) {
     paginaActual = nuevaPagina;
     mostrarPagina(paginaActual);
@@ -99,18 +100,19 @@ function cambiarPagina(direccion) {
 function actualizarSeleccionarTodos() {
   const checkboxes = document.querySelectorAll('.usuario-checkbox');
   const seleccionarTodosCheckbox = document.getElementById('seleccionarTodos');
-  
+
   if (checkboxes.length > 0 && seleccionarTodosCheckbox) {
     const todosMarcados = Array.from(checkboxes).every(checkbox => checkbox.checked);
     seleccionarTodosCheckbox.checked = todosMarcados;
   }
 }
 
-function enviarCampaña(event) {
+
+function sendCampaign(event) {
   event.preventDefault();
 
   const medios = Array.from(document.querySelectorAll('input[name="tipoCampaña"]:checked')).map(input => input.value);
-  
+
   if (medios.length === 0) {
     alert('Selecciona al menos un medio de envío.');
     return;
@@ -128,11 +130,11 @@ function enviarCampaña(event) {
   }
 
   const mediaUrl = document.getElementById('mediaUrl').value;
-  
-  // Deduplicate users by email
+
+  // Deduplicar usuarios por email
   const usuariosSeleccionados = Array.from(usuariosSeleccionadosGlobal)
     .map(email => datosUsuariosGlobal.find(usuario => usuario.email === email))
-    .filter((usuario, index, self) => 
+    .filter((usuario, index, self) =>
       index === self.findIndex((u) => u.email === usuario.email)
     );
 
@@ -145,30 +147,56 @@ function enviarCampaña(event) {
       let url = '';
       let body = {};
 
-      if ((medio === 'sms' || medio === 'mms' || medio === 'whatsapp') && usuario.telefono) {
-        // Formatear el número de teléfono para WhatsApp
-        const numeroFormateado = usuario.telefono.replace('+', ''); // Elimina el símbolo '+'
-        const numeroWhatsApp = medio === 'whatsapp' ? `${numeroFormateado}@s.whatsapp.net` : numeroFormateado;
-      
-        url = medio === 'whatsapp' ? 'http://localhost:5000/enviar-whatsapp' : 
-              medio === 'mms' ? 'http://localhost:5000/enviar-mms' : 
-              'http://localhost:5000/enviar-sms';
-        
+      if (medio === 'whatsapp') {
+        if (!usuario.telefono) {
+          errores.push(`El usuario ${usuario.nombre_completo} no tiene número de teléfono para WhatsApp.`);
+          return;
+        }
+
+        let number = usuario.telefono;
+        console.log('number', usuario.telefono);
+        // Extraer el prefijo del número de teléfono
+        let wpp_number = `${number.replace(/\D/g, '')}@s.whatsapp.net`;
+
+        url = 'http://127.0.0.1:5000/enviar-whatsapp';
         body = {
-          to: numeroWhatsApp, // Usar el número formateado para WhatsApp
-          message: mensaje,   // Asegúrate de que el campo se llame "message" y no "body"
-          ...(medio === 'mms' && { mediaUrl: mediaUrl })
+          to: wpp_number,
+          message: mensaje
         };
-      
-      } else if (medio === 'email' && usuario.email) {
-        url = 'http://localhost:5000/enviar-email';
+
+      } else if (medio === 'sms' || medio === 'mms') {
+        if (!usuario.telefono) {
+          errores.push(`El usuario ${usuario.nombre_completo} no tiene número de teléfono para ${medio.toUpperCase()}.`);
+          return;
+        }
+
+        let to = usuario.telefono;
+        console.log('numero sms', to);
+
+        url = medio === 'sms' ? 'http://127.0.0.1:5000/enviar-sms' : 'http://127.0.0.1:5000/enviar-mms';
+        body = {
+          to: [to],
+          body: mensaje
+        };
+
+        if (medio === 'mms' && mediaUrl) {
+          body.mediaUrl = mediaUrl;
+        }
+
+      } else if (medio === 'email') {
+        if (!usuario.email) {
+          errores.push(`El usuario ${usuario.nombre_completo} no tiene correo electrónico.`);
+          return;
+        }
+
+        url = 'http://127.0.0.1:5000/enviar-email';
         body = {
           to: [usuario.email],
           subject: document.getElementById('asunto').value || 'Campaña de Marketing',
           text: mensaje
         };
       } else {
-        errores.push(`El usuario ${usuario.nombre_completo} no tiene ${medio === 'email' ? 'correo electrónico' : 'número de teléfono'}.`);
+        errores.push(`Medio de envío no válido: ${medio}`);
         return;
       }
 
@@ -185,12 +213,14 @@ function enviarCampaña(event) {
           return response.json();
         })
         .then(data => {
-          console.log(`Mensaje enviado a ${usuario.email || usuario.telefono}:`, data);
+          const destinatario = medio === 'email' ? usuario.email : usuario.telefono;
+          console.log(`Mensaje enviado a ${destinatario} por ${medio}:`, data);
           exitosos++;
         })
         .catch(error => {
-          console.error('Error al enviar mensaje:', error);
-          errores.push(`Error al enviar ${medio} a ${usuario.email || usuario.telefono}: ${error.message}`);
+          const destinatario = medio === 'email' ? usuario.email : usuario.telefono;
+          console.error(`Error al enviar ${medio}:`, error);
+          errores.push(`Error al enviar ${medio} a ${destinatario}: ${error.message}`);
         });
 
         promesasEnvio.push(promesa);
@@ -198,26 +228,32 @@ function enviarCampaña(event) {
     });
   });
 
-  Promise.all(promesasEnvio).finally(() => {
-    let mensaje = '';
-    if (exitosos > 0) {
-      mensaje += `Se enviaron ${exitosos} mensajes exitosamente.\n`;
-    }
-    if (errores.length > 0) {
-      mensaje += `\nHubo ${errores.length} errores:\n${errores.join('\n')}`;
-    }
-    alert(mensaje);
-    
-    if (exitosos > 0) {
-      document.getElementById('campaignForm').reset();
-    }
-  });
+  Promise.all(promesasEnvio.map(p => p.catch(e => e)))
+    .then(results => {
+      const completados = results.filter(r => !(r instanceof Error));
+      exitosos = completados.length;
+      
+      let mensaje = '';
+      if (exitosos > 0) {
+        mensaje += `Se enviaron ${exitosos} mensajes exitosamente.\n`;
+      }
+      if (errores.length > 0) {
+        mensaje += `\nHubo ${errores.length} errores:\n${errores.join('\n')}`;
+      }
+      alert(mensaje);
+
+      if (exitosos > 0) {
+        document.getElementById('campaignForm').reset();
+      }
+    });
 }
+
+
 
 function seleccionarTodosUsuarios() {
   const checkboxes = document.querySelectorAll('.usuario-checkbox');
   const seleccionarTodos = document.getElementById('seleccionarTodos').checked;
-  
+
   checkboxes.forEach(checkbox => {
     checkbox.checked = seleccionarTodos;
     const email = checkbox.dataset.email;
@@ -232,7 +268,7 @@ function seleccionarTodosUsuarios() {
 function seleccionarTodosUsuariosVisibles() {
   const checkboxes = document.querySelectorAll('.usuario-checkbox');
   const seleccionarTodos = true;
-  
+
   checkboxes.forEach(checkbox => {
     checkbox.checked = seleccionarTodos;
     const email = checkbox.dataset.email;
