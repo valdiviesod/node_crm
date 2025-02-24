@@ -117,13 +117,79 @@ app.post('/guardar-formulario', (req, res) => {
     return res.status(400).json({ error: 'El email no es válido' });
   }
 
-  const query = 'INSERT INTO formulario (nombre_completo, email, telefono, zona) VALUES (?, ?, ?, ?)';
-  connection.query(query, [nombreCompleto, email, telefono, zona], (err, results) => {
+  // Verificar si el correo ya está registrado
+  const checkEmailQuery = 'SELECT * FROM formulario WHERE email = ?';
+  connection.query(checkEmailQuery, [email], (err, results) => {
     if (err) {
-      console.error('Error al guardar los datos:', err);
-      return res.status(500).json({ error: 'Error al guardar los datos en la base de datos' });
+      console.error('Error al verificar el correo:', err);
+      return res.status(500).json({ error: 'Error al verificar el correo' });
     }
-    res.status(200).json({ message: 'Datos guardados correctamente' });
+
+    if (results.length > 0) {
+      // El correo ya está registrado, generar un código de validación
+      const codigoValidacion = Math.floor(100000 + Math.random() * 900000); // Código de 6 dígitos
+
+      // Enviar el código de validación por SMS
+      client.messages.create({
+        body: `Tu código de validación es: ${codigoValidacion}`,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to: telefono
+      })
+      .then(() => {
+        res.status(200).json({ message: 'Código de validación enviado por SMS', codigoValidacion });
+      })
+      .catch(err => {
+        console.error('Error al enviar SMS:', err);
+        res.status(500).json({ error: 'Error al enviar SMS', details: err });
+      });
+    } else {
+      // El correo no está registrado, proceder a guardar los datos
+      const insertQuery = 'INSERT INTO formulario (nombre_completo, email, telefono, zona) VALUES (?, ?, ?, ?)';
+      connection.query(insertQuery, [nombreCompleto, email, telefono, zona], (err, results) => {
+        if (err) {
+          console.error('Error al guardar los datos:', err);
+          return res.status(500).json({ error: 'Error al guardar los datos en la base de datos' });
+        }
+        res.status(200).json({ message: 'Datos guardados correctamente' });
+      });
+    }
+  });
+});
+
+app.post('/validar-codigo', (req, res) => {
+  const { email, codigoIngresado } = req.body;
+
+  if (!email || !codigoIngresado) {
+    return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+  }
+
+  // Verificar si el correo existe en la base de datos
+  const checkEmailQuery = 'SELECT * FROM formulario WHERE email = ?';
+  connection.query(checkEmailQuery, [email], (err, results) => {
+    if (err) {
+      console.error('Error al verificar el correo:', err);
+      return res.status(500).json({ error: 'Error al verificar el correo' });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'El correo no está registrado' });
+    }
+
+    // Obtener el código de validación almacenado (puedes guardarlo en la base de datos o en memoria)
+    const codigoValidacionGuardado = results[0].codigo_validacion; // Asume que agregaste una columna `codigo_validacion` en la tabla
+
+    if (!codigoValidacionGuardado) {
+      return res.status(400).json({ error: 'No se encontró un código de validación para este correo' });
+    }
+
+    // Comparar el código ingresado con el código guardado
+    if (codigoIngresado === codigoValidacionGuardado) {
+      // Código válido
+      res.status(200).json({ message: 'Código validado correctamente' });
+    } else {
+      // Código inválido
+      res.status(400).json({ error: 'Código de validación incorrecto' });
+    }
   });
 });
 
