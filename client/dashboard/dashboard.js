@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function cargarUsuarios(pagina = 1) {
   const zona = document.getElementById('filtroZona').value;
-  let url = 'http://172.23.166.191:5000/usuarios';
+  let url = 'http://localhost:5000/usuarios';
   if (zona) {
     url += `?zona=${zona}`;
   }
@@ -154,27 +154,31 @@ function enviarCampaña(event) {
         const telefonoFormateado = `+${usuario.telefono.replace(/\D/g, '')}`; // Asegura el formato internacional
 
         if (medio === 'whatsapp') {
-          url = 'http://172.23.166.191:5000/enviar-whatsapp';
+          url = 'http://localhost:5000/enviar-whatsapp';
           body = {
             to: `${telefonoFormateado.replace('+', '')}@s.whatsapp.net`,
             message: mensaje
           };
         } else if (medio === 'mms') {
-          url = 'http://172.23.166.191:5000/enviar-mms';
+          if (!mediaUrl || !mediaUrl.trim()) {
+            errores.push(`No se proporcionó una URL de medios para MMS.`);
+            return;
+          }
+          url = 'http://localhost:5000/enviar-mms';
           body = {
             to: [telefonoFormateado],
             body: mensaje,
-            mediaUrl: mediaUrl
+            mediaUrl: [mediaUrl]
           };
         } else if (medio === 'sms') {
-          url = 'http://172.23.166.191:5000/enviar-sms';
+          url = 'http://localhost:5000/enviar-sms';
           body = {
             to: [telefonoFormateado],
             body: mensaje
           };
         }
       } else if (medio === 'email' && usuario.email) {
-        url = 'http://172.23.166.191:5000/enviar-email';
+        url = 'http://localhost:5000/enviar-email';
         body = {
           to: [usuario.email],
           subject: document.getElementById('asunto').value || 'Campaña de Marketing',
@@ -223,6 +227,8 @@ function enviarCampaña(event) {
     
     if (exitosos > 0) {
       document.getElementById('campaignForm').reset();
+      usuariosSeleccionadosGlobal.clear();
+      cargarUsuarios(paginaActual); // Recargar la tabla para actualizar los checkboxes
     }
   });
 }

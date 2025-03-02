@@ -5,6 +5,7 @@ const cors = require('cors');
 const twilio = require('twilio');
 const { default: makeWASocket, useMultiFileAuthState } = require('@whiskeysockets/baileys');
 const qrcode = require('qrcode-terminal');
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const app = express();
@@ -27,6 +28,17 @@ connection.connect(err => {
     return;
   }
   console.log('Conectado a la base de datos');
+});
+
+// Configuración de Nodemailer
+const transporter = nodemailer.createTransport({
+  host: 'mail.techcis.com.co', // Cambia esto por el host de tu servidor SMTP
+  port: 465, // Puerto seguro para SMTP (SSL)
+  secure: true, // Usar SSL
+  auth: {
+    user: 'e.marketing@techcis.com.co', // Tu dirección de correo electrónico
+    pass: process.env.EMAIL_PASSWORD // Tu contraseña de correo electrónico (guárdala en .env)
+  }
 });
 
 let sock;
@@ -83,7 +95,6 @@ app.get('/qr', (req, res) => {
     res.send('No QR code available');
   }
 });
-
 
 // Ruta para enviar mensajes de WhatsApp
 app.post('/enviar-whatsapp', async (req, res) => {
@@ -177,7 +188,6 @@ app.post('/guardar-formulario', (req, res) => {
   });
 });
 
-
 app.post('/validar-codigo', (req, res) => {
   const { email, codigoIngresado } = req.body;
 
@@ -247,6 +257,10 @@ app.post('/enviar-sms', (req, res) => {
 app.post('/enviar-mms', (req, res) => {
   const { to, body, mediaUrl } = req.body;
 
+  if (!to || !body || !mediaUrl) {
+    return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+  }
+
   const recipients = Array.isArray(to) ? to : [to];
 
   const promises = recipients.map(number => {
@@ -254,17 +268,20 @@ app.post('/enviar-mms', (req, res) => {
       body: body,
       from: process.env.TWILIO_PHONE_NUMBER,
       to: number,
-      mediaUrl: [mediaUrl] 
+      mediaUrl: Array.isArray(mediaUrl) ? mediaUrl : [mediaUrl] 
     });
   });
 
   Promise.all(promises)
-    .then(messages => res.status(200).json({ message: 'MMS enviados correctamente', sids: messages.map(m => m.sid) }))
-    .catch(err => res.status(500).json({ error: 'Error al enviar MMS', details: err }));
+    .then(messages => {
+      console.log('MMS enviados correctamente:', messages);
+      res.status(200).json({ message: 'MMS enviados correctamente', sids: messages.map(m => m.sid) });
+    })
+    .catch(err => {
+      console.error('Error al enviar MMS:', err);
+      res.status(500).json({ error: 'Error al enviar MMS', details: err.message });
+    });
 });
-
-const sgMail = require('@sendgrid/mail');
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 app.post('/enviar-email', async (req, res) => {
   const { to, subject, text } = req.body;
@@ -275,15 +292,18 @@ app.post('/enviar-email', async (req, res) => {
 
   const fromEmail = 'e.marketing@techcis.com.co';
 
-  const messages = to.map(email => ({
-    to: email,
-    from: fromEmail,
-    subject: subject,
-    text: text
-  }));
-
   try {
-    const results = await sgMail.sendMultiple(messages);
+    const results = await Promise.all(
+      to.map(email => {
+        return transporter.sendMail({
+          from: fromEmail,
+          to: email,
+          subject: subject,
+          text: text
+        });
+      })
+    );
+
     res.status(200).json({ 
       message: 'Correos enviados correctamente', 
       results: results 

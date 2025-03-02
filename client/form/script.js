@@ -12,7 +12,7 @@ document.getElementById('contactForm').addEventListener('submit', function(event
     zona: document.getElementById('zona').value
   };
 
-  fetch('http://172.23.166.191:5000/guardar-formulario', {
+  fetch('http://localhost:5000/guardar-formulario', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -36,7 +36,7 @@ document.getElementById('contactForm').addEventListener('submit', function(event
 
 const validarCodigo = async (email, codigoIngresado) => {
   try {
-    const response = await fetch('http://172.23.166.191:5000/validar-codigo', {
+    const response = await fetch('http://localhost:5000/validar-codigo', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
