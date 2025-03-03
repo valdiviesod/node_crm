@@ -30,17 +30,6 @@ connection.connect(err => {
   console.log('Conectado a la base de datos');
 });
 
-// Configuración de Nodemailer
-const transporter = nodemailer.createTransport({
-  host: 'mail.techcis.com.co', // Cambia esto por el host de tu servidor SMTP
-  port: 465, // Puerto seguro para SMTP (SSL)
-  secure: true, // Usar SSL
-  auth: {
-    user: 'e.marketing@techcis.com.co', // Tu dirección de correo electrónico
-    pass: process.env.EMAIL_PASSWORD // Tu contraseña de correo electrónico (guárdala en .env)
-  }
-});
-
 let sock;
 let qrCode = null;
 
@@ -257,10 +246,6 @@ app.post('/enviar-sms', (req, res) => {
 app.post('/enviar-mms', (req, res) => {
   const { to, body, mediaUrl } = req.body;
 
-  if (!to || !body || !mediaUrl) {
-    return res.status(400).json({ error: 'Todos los campos son obligatorios' });
-  }
-
   const recipients = Array.isArray(to) ? to : [to];
 
   const promises = recipients.map(number => {
@@ -268,19 +253,24 @@ app.post('/enviar-mms', (req, res) => {
       body: body,
       from: process.env.TWILIO_PHONE_NUMBER,
       to: number,
-      mediaUrl: Array.isArray(mediaUrl) ? mediaUrl : [mediaUrl] 
+      mediaUrl: [mediaUrl] 
     });
   });
 
   Promise.all(promises)
-    .then(messages => {
-      console.log('MMS enviados correctamente:', messages);
-      res.status(200).json({ message: 'MMS enviados correctamente', sids: messages.map(m => m.sid) });
-    })
-    .catch(err => {
-      console.error('Error al enviar MMS:', err);
-      res.status(500).json({ error: 'Error al enviar MMS', details: err.message });
-    });
+    .then(messages => res.status(200).json({ message: 'MMS enviados correctamente', sids: messages.map(m => m.sid) }))
+    .catch(err => res.status(500).json({ error: 'Error al enviar MMS', details: err }));
+});
+
+// Configuración de Nodemailer para cPanel
+const transporter = nodemailer.createTransport({
+  host: 'mail.techcis.com.co', // Reemplaza con tu host de cPanel
+  port: 465, // Puerto seguro para cPanel
+  secure: true, // Usar SSL
+  auth: {
+    user: 'e.marketing@techcis.com.co', // Tu correo de cPanel
+    pass: process.env.CPANEL_EMAIL_PASSWORD // Contraseña del correo
+  }
 });
 
 app.post('/enviar-email', async (req, res) => {
@@ -292,21 +282,19 @@ app.post('/enviar-email', async (req, res) => {
 
   const fromEmail = 'e.marketing@techcis.com.co';
 
-  try {
-    const results = await Promise.all(
-      to.map(email => {
-        return transporter.sendMail({
-          from: fromEmail,
-          to: email,
-          subject: subject,
-          text: text
-        });
-      })
-    );
+  const mailOptions = {
+    from: fromEmail,
+    to: fromEmail, // Enviar el correo a tu propia dirección (opcional)
+    bcc: to.join(', '), // Usar BCC para ocultar los destinatarios
+    subject: subject,
+    text: text
+  };
 
+  try {
+    const info = await transporter.sendMail(mailOptions);
     res.status(200).json({ 
       message: 'Correos enviados correctamente', 
-      results: results 
+      info: info 
     });
   } catch (error) {
     console.error('Error al enviar correos:', error);
