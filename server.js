@@ -6,6 +6,8 @@ const twilio = require('twilio');
 const { default: makeWASocket, useMultiFileAuthState } = require('@whiskeysockets/baileys');
 const qrcode = require('qrcode-terminal');
 const nodemailer = require('nodemailer');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const app = express();
@@ -28,6 +30,41 @@ connection.connect(err => {
     return;
   }
   console.log('Conectado a la base de datos');
+});
+
+// Middleware de autenticación
+const authMiddleware = (req, res, next) => {
+  const token = req.headers['x-access-token'];
+
+  if (!token) {
+    return res.status(403).json({ message: 'No se proporcionó un token' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: 'Token no válido' });
+    }
+
+    req.userId = decoded.id;
+    next();
+  });
+};
+
+// Ruta de login
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+
+  // Verificar si las credenciales coinciden con las del .env
+  if (username !== process.env.APP_USERNAME || password !== process.env.APP_PASSWORD) {
+    return res.status(401).json({ message: 'Credenciales incorrectas' });
+  }
+
+  // Generar token JWT
+  const token = jwt.sign({ id: 1 }, process.env.JWT_SECRET, {
+    expiresIn: 86400 // 24 horas
+  });
+
+  res.status(200).json({ token });
 });
 
 let sock;
@@ -86,7 +123,7 @@ app.get('/qr', (req, res) => {
 });
 
 // Ruta para enviar mensajes de WhatsApp
-app.post('/enviar-whatsapp', async (req, res) => {
+app.post('/enviar-whatsapp', authMiddleware, async (req, res) => {
   const { to, message } = req.body;
 
   if (!to || !message) {
@@ -123,7 +160,7 @@ const limpiarCodigosExpirados = () => {
   }
 };
 
-app.post('/guardar-formulario', (req, res) => {
+app.post('/guardar-formulario', authMiddleware, (req, res) => {
   const { nombreCompleto, email, telefono, zona } = req.body;
 
   if (!nombreCompleto || !email || !telefono || !zona) {
@@ -177,7 +214,7 @@ app.post('/guardar-formulario', (req, res) => {
   });
 });
 
-app.post('/validar-codigo', (req, res) => {
+app.post('/validar-codigo', authMiddleware, (req, res) => {
   const { email, codigoIngresado } = req.body;
 
   if (!email || !codigoIngresado) {
@@ -205,7 +242,7 @@ app.post('/validar-codigo', (req, res) => {
   }
 });
 
-app.get('/usuarios', (req, res) => {
+app.get('/usuarios', authMiddleware, (req, res) => {
   const { zona } = req.query;
 
   let query = `
@@ -225,7 +262,7 @@ app.get('/usuarios', (req, res) => {
   });
 });
 
-app.post('/enviar-sms', (req, res) => {
+app.post('/enviar-sms', authMiddleware, (req, res) => {
   const { to, body } = req.body;
 
   const recipients = Array.isArray(to) ? to : [to];
@@ -243,7 +280,7 @@ app.post('/enviar-sms', (req, res) => {
     .catch(err => res.status(500).json({ error: 'Error al enviar SMS', details: err }));
 });
 
-app.post('/enviar-mms', (req, res) => {
+app.post('/enviar-mms', authMiddleware, (req, res) => {
   const { to, body, mediaUrl } = req.body;
 
   const recipients = Array.isArray(to) ? to : [to];
@@ -273,7 +310,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-app.post('/enviar-email', async (req, res) => {
+app.post('/enviar-email', authMiddleware, async (req, res) => {
   const { to, subject, text } = req.body;
 
   if (!to || !Array.isArray(to) || to.length === 0) {
