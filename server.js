@@ -32,9 +32,9 @@ connection.connect(err => {
   console.log('Conectado a la base de datos');
 });
 
-// Middleware de autenticación
 const authMiddleware = (req, res, next) => {
-  const token = req.headers['x-access-token'];
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Extract token from "Bearer TOKEN"
 
   if (!token) {
     return res.status(403).json({ message: 'No se proporcionó un token' });
