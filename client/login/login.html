@@ -88,7 +88,7 @@
                     // Guardar el token en localStorage o sessionStorage
                     localStorage.setItem('token', data.token);
                     // Redirigir al usuario a la página principal o dashboard
-                    window.location.href = '/dashboard.html'; // Cambia esta URL según tu aplicación
+                    window.location.href = '../dashboard/dashboard.html'; // Cambia esta URL según tu aplicación
                 } else {
                     document.getElementById('errorMessage').textContent = data.message || 'Error al iniciar sesión';
                 }
