@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Acceso a Internet</title>
   <style>
-
     *, *:after, *:before {
       box-sizing: border-box;
     }
@@ -40,23 +39,20 @@
     .card-image {
       border-radius: 8px;
       overflow: hidden;
-      padding-bottom: 65%;
-      background-image: url('');
+      height: 150px; /* Altura fija para la imagen */
+      background-image: url('https://donecenter.net/redetek/public/images/Logo_Redetek.jpg');
       background-repeat: no-repeat;
-      background-size: 150%;
-      background-position: 0 5%;
-      position: relative;
+      background-size: contain; /* Ajusta el logo al contenedor */
+      background-position: center; /* Centra el logo */
     }
 
     .card-heading {
-      position: absolute;
-      left: 10%;
-      top: 15%;
-      right: 10%;
+      text-align: center; /* Centra el texto */
       font-size: 1.75rem;
       font-weight: 700;
       color: #735400;
       line-height: 1.222;
+      margin-top: 1rem; /* Espacio entre la imagen y el título */
     }
 
     .card-heading small {
@@ -178,12 +174,11 @@
 <body>
   <div class="container">
     <div class="card">
-      <div class="card-image">
-        <h2 class="card-heading">
-          Accede a nuestra red Wi-Fi
-          <small>Déjanos tus datos para conectarte</small>
-        </h2>
-      </div>
+      <div class="card-image"></div> <!-- Contenedor de la imagen -->
+      <h2 class="card-heading">
+        Accede a nuestra red Wi-Fi
+        <small>Déjanos tus datos para conectarte</small>
+      </h2>
       <form class="card-form" id="contactForm">
         <div class="input">
           <input type="text" class="input-field" id="nombreCompleto" required>
