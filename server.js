@@ -160,7 +160,7 @@ const limpiarCodigosExpirados = () => {
   }
 };
 
-app.post('/guardar-formulario', authMiddleware, (req, res) => {
+app.post('/guardar-formulario', (req, res) => {
   const { nombreCompleto, email, telefono, zona } = req.body;
 
   if (!nombreCompleto || !email || !telefono || !zona) {
@@ -214,7 +214,7 @@ app.post('/guardar-formulario', authMiddleware, (req, res) => {
   });
 });
 
-app.post('/validar-codigo', authMiddleware, (req, res) => {
+app.post('/validar-codigo', (req, res) => {
   const { email, codigoIngresado } = req.body;
 
   if (!email || !codigoIngresado) {
